@@ -3,14 +3,8 @@ import tensorflow as tf
 import tensorflow_io as tfio
 
 
-def load_wav_16k_mono(filename):
-    file_contents = tf.io.read_file(filename)
-    wav, sample_rate = tf.audio.decode_wav(file_contents, desired_channels=1)
-
-    # Remove trailing axis
-    wav = tf.squeeze(wav, axis=1)
-    sample_rate = tf.cast(sample_rate, dtype=tf.int64)
-
-    # Goes from 44100Hz to 16000Hz - amplitude of the audio signal
-    wav = tfio.audio.resample(wav, rate_in=sample_rate, rate_out=16000)
-    return wav
+def get_spectrogram(wav, frame_length, frame_step):
+    spectrogram = tf.signal.stft(wav, frame_length=frame_length, frame_step=frame_step)
+    spectrogram = tf.abs(spectrogram)
+    spectrogram = tf.expand_dims(spectrogram, axis=2)
+    return spectrogram
