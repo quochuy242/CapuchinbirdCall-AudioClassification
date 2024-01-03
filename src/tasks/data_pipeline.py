@@ -20,5 +20,5 @@ def data_pipeline(data: tf.data.ConcatenateDataset, batch_size: int):
     data = data.map(preprocess)
     data = data.cache()
     data = data.shuffle(buffer_size=1000)
-    data = data.batch(64)
+    data = data.batch(batch_size)
     data = data.prefetch(buffer_size=tf.data.AUTOTUNE)
