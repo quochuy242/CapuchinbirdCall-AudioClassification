@@ -1,4 +1,5 @@
 import os
+import sys
 import tensorflow as tf
 
 from tensorflow import keras
@@ -17,8 +18,8 @@ from keras.metrics import Accuracy, Recall, Precision
 from keras.optimizers import Adam
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 
-from tasks.preprocessing import preprocess
-from tasks.data_pipeline import create_data, data_pipeline
+sys.path.insert(0, "D:/Python Project/DeepAudioClassification/src")
+from tasks.data_pipeline import data_pipeline, create_data
 from tasks.split_data import split_data
 
 Dataset = tf.data.Dataset
@@ -44,11 +45,10 @@ class Audio_Dataset:
 
 class CNN_Model:
     def __init__(self, input_shape, resize_height, resize_width) -> None:
-        self.model = Sequential(
-            Input(shape=input_shape),
-            Resizing(resize_height, resize_width),
-            Normalization(),
-        )
+        self.model = Sequential()
+        self.model.add(Input(shape=input_shape))
+        self.model.add(Resizing(resize_height, resize_width))
+        self.model.add(Normalization())
 
     def add_conv2d(self, filters, kernel_size, activation):
         self.model.add(
@@ -90,25 +90,14 @@ class CNN_Model:
 
 
 if __name__ == "__main__":
+    sys.path.insert(0, "D:/Python Project/DeepAudioClassification")
     PARSED_DIR = os.path.join("data", "Parsed_Capuchinbird_Clips")
     NOT_PARSED_DIR = os.path.join("data", "Parsed_Not_Capuchinbird_Clips")
     data = Audio_Dataset(
         pos_path=PARSED_DIR, neg_path=NOT_PARSED_DIR, train_rate=0.9, val_rate=0.1
     )
+    train_ds, val_ds, test_ds = data.pipeline()
 
-    early_stopping = EarlyStopping(
-        monitor="val_f1_score",
-        patience=200,
-        verbose=1,
-        mode="max",
-        restore_best_weights=True,
-    )
-    model_checkpoint = ModelCheckpoint(
-        filepath="model_checkpoint/best_model.h5",
-        monitor="val_f1_score",
-        save_best_only=True,
-        mode="max",
-    )
     model = CNN_Model(
         input_shape=(1491, 257, 1),
         resize_height=32,
@@ -116,11 +105,11 @@ if __name__ == "__main__":
     )
     model.add_conv2d(filters=32, kernel_size=(3, 3), activation="relu")
     model.add_maxpooling2d(pool_size=(2, 2))
-    model.add_dropout(rate=0.2)
+    # model.add_dropout(rate=0.2)
 
     model.add_conv2d(filters=16, kernel_size=(3, 3), activation="relu")
-    model.add_maxpooling2d(pool_size=(2, 2))
-    model.add_dropout(rate=0.2)
+    # model.add_maxpooling2d(pool_size=(2, 2))
+    # model.add_dropout(rate=0.2)
 
     model.add_flatten()
     model.add_dense(units=128, activation="relu")
@@ -132,3 +121,22 @@ if __name__ == "__main__":
         metrics=[Accuracy(), Recall(), Precision()],
     )
     model.model_summary()
+    early_stopping = EarlyStopping(
+        monitor="val_recall",
+        patience=200,
+        verbose=1,
+        mode="max",
+        restore_best_weights=True,
+    )
+    model_checkpoint = ModelCheckpoint(
+        filepath="weights/best_model.h5",
+        monitor="val_recall",
+        save_best_only=True,
+        mode="max",
+    )
+    model.model_fit(
+        train_data=train_ds,
+        validation_data=val_ds,
+        epochs=2000,
+        callbacks=[early_stopping, model_checkpoint],
+    )

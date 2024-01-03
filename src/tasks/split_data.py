@@ -2,7 +2,7 @@ import tensorflow as tf
 
 
 def split_data(
-    data: tf.data.ConcatenateDataset,
+    data,
     train_rate: float,
     validation_rate: float,
     test_rate: float = 0,
