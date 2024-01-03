@@ -90,26 +90,26 @@ class CNN_Model:
 
 
 if __name__ == "__main__":
-    sys.path.insert(0, "D:/Python Project/DeepAudioClassification")
-    PARSED_DIR = os.path.join("data", "Parsed_Capuchinbird_Clips")
-    NOT_PARSED_DIR = os.path.join("data", "Parsed_Not_Capuchinbird_Clips")
+    DATASET_PATH = os.path.join(os.getcwd(), "DeepAudioClassification", "data")
+    PARSED_DIR = os.path.join(DATASET_PATH, "Parsed_Capuchinbird_Clips")
+    NOT_PARSED_DIR = os.path.join(DATASET_PATH, "Parsed_Not_Capuchinbird_Clips")
     data = Audio_Dataset(
         pos_path=PARSED_DIR, neg_path=NOT_PARSED_DIR, train_rate=0.9, val_rate=0.1
     )
     train_ds, val_ds, test_ds = data.pipeline()
-
+    print(data.as_numpy_iterator().next()[0].shape)
     model = CNN_Model(
         input_shape=(1491, 257, 1),
-        resize_height=32,
+        resize_height=186,
         resize_width=32,
     )
     model.add_conv2d(filters=32, kernel_size=(3, 3), activation="relu")
     model.add_maxpooling2d(pool_size=(2, 2))
-    # model.add_dropout(rate=0.2)
+    model.add_dropout(rate=0.2)
 
     model.add_conv2d(filters=16, kernel_size=(3, 3), activation="relu")
-    # model.add_maxpooling2d(pool_size=(2, 2))
-    # model.add_dropout(rate=0.2)
+    model.add_maxpooling2d(pool_size=(2, 2))
+    model.add_dropout(rate=0.2)
 
     model.add_flatten()
     model.add_dense(units=128, activation="relu")
@@ -117,7 +117,7 @@ if __name__ == "__main__":
 
     model.model_compile(
         optimizer=Adam(learning_rate=0.00001),
-        loss="binary_crossentropy",
+        loss=tf.keras.losses.BinaryCrossentropy(),
         metrics=[Accuracy(), Recall(), Precision()],
     )
     model.model_summary()

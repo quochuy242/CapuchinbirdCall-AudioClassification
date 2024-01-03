@@ -13,10 +13,8 @@ def split_data(
         test_data = data.skip(int(len_data * train_rate)).take(
             int(len_data * test_rate)
         )
-        validation_data = data.skip(
-            int(len_data * (train_rate + test_rate)).take(
-                int(len_data * (1 - train_rate - test_rate))
-            )
+        validation_data = data.skip(int(len_data * (train_rate + test_rate))).take(
+            int(len_data * (1 - train_rate - test_rate))
         )
     else:
         validation_data = data.skip(int(len_data * train_rate)).take(
